@@ -651,8 +651,11 @@ ExifData *exif_read_fd(FileData *fd)
 
 	if (!fd || !is_readable_file(fd->path)) return NULL;
 	
-	if (file_cache_get(exif_cache, fd)) return fd->exif;
-	
+	if (file_cache_get(exif_cache, fd))
+		{
+		DEBUG_4("Exif Cache Hit %p", fd->exif);
+		return fd->exif;
+		}
 	/* CACHE_TYPE_XMP_METADATA file should exist only if the metadata are
 	 * not writable directly, thus it should contain the most up-to-date version */
 	sidecar_path = NULL;
@@ -665,6 +668,7 @@ ExifData *exif_read_fd(FileData *fd)
 #endif
 
 	fd->exif = exif_read(fd->path, sidecar_path, fd->modified_xmp);
+	DEBUG_4("Exif Cache Miss %p", fd->exif);
 
 	g_free(sidecar_path);
 	return fd->exif;
