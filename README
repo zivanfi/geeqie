@@ -17,20 +17,14 @@ possible to contact gqview author and the only maintainer.
 Geeqie projects goal is to move the development forward and 
 also integrate the existing patches.
 
-Geeqie is currently in beta state. All planed features for 1.0 are implemented,
-but there are bugs. Please report any crash or odd behavior to the bugtracker:
+Please report any crash or odd behavior to the bugtracker:
 https://sourceforge.net/tracker/?group_id=222125&atid=1054680
 
 For more info see:
 http://geeqie.sourceforge.net
 
-Vladimir Nadvornik
-Petr Ostadal
-
 Please send any question or suggestions to
 geeqie-devel@lists.sourceforge.net
-
-
 
 
 ======== README contents:
