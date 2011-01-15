@@ -147,6 +147,11 @@ static void bar_pane_histogram_notify_cb(FileData *fd, NotifyType type, gpointer
 static gboolean bar_pane_histogram_expose_event_cb(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 {
 	PaneHistogramData *phd = data;
+
+#if GTK_CHECK_VERSION(2,22,0)
+	cairo_t *cr;
+#endif
+
 	if (!phd) return TRUE;
 	
 	if (phd->need_update)
@@ -155,7 +160,15 @@ static gboolean bar_pane_histogram_expose_event_cb(GtkWidget *widget, GdkEventEx
 		}
 	
 	if (!phd->pixbuf) return TRUE;
-	
+
+#if GTK_CHECK_VERSION(2,22,0)
+	cr = gdk_cairo_create(widget->window);
+	gdk_cairo_set_source_pixbuf(cr, phd->pixbuf, 0, 0);
+	cairo_paint(cr);
+	cairo_destroy(cr);
+
+#else
+
 	gdk_draw_pixbuf(widget->window,
 #if GTK_CHECK_VERSION(2,20,0)
 			widget->style->fg_gc[gtk_widget_get_state(widget)],
@@ -167,6 +180,8 @@ static gboolean bar_pane_histogram_expose_event_cb(GtkWidget *widget, GdkEventEx
 			0, 0,
 			-1, -1,
 			GDK_RGB_DITHER_NORMAL, 0, 0);
+#endif
+
 	return TRUE;
 }
 
