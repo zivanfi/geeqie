@@ -690,6 +690,13 @@ gqv_cell_renderer_icon_render(GtkCellRenderer		*cell,
 		if (gdk_rectangle_intersect(cell_area, &pix_rect, &draw_rect) &&
 		    gdk_rectangle_intersect(expose_area, &draw_rect, &draw_rect))
 			{
+#if GTK_CHECK_VERSION(2,22,0)
+			cairo_t *cr = gdk_cairo_create(window);
+			gdk_cairo_set_source_pixbuf(cr, pixbuf, draw_rect.x, draw_rect.y);
+			cairo_paint(cr);
+			cairo_destroy(cr);
+#else
+
 			gdk_draw_pixbuf(window,
 					widget->style->black_gc,
 					pixbuf,
@@ -702,6 +709,7 @@ gqv_cell_renderer_icon_render(GtkCellRenderer		*cell,
 					draw_rect.height,
 					GDK_RGB_DITHER_NORMAL,
 					0, 0);
+#endif
 			}
 		}
 
