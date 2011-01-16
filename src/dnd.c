@@ -156,9 +156,22 @@ void dnd_set_drag_icon(GtkWidget *widget, GdkDragContext *context, GdkPixbuf *pi
 
 	if (layout)
 		{
+#if GTK_CHECK_VERSION(2,20,0)
+		cairo_t *cr = gdk_cairo_create(pixmap);
+		gdk_cairo_set_source_color(cr, &gtk_widget_get_style(widget)->black);
+		cairo_move_to(cr, x+1, y+1);
+		pango_cairo_show_layout(cr, layout);
+
+		gdk_cairo_set_source_color(cr, &gtk_widget_get_style(widget)->white);
+		cairo_move_to(cr, x, y);
+		pango_cairo_show_layout(cr, layout);
+
+		cairo_destroy (cr);
+#else
+
 		gdk_draw_layout(pixmap, widget->style->black_gc, x+1, y+1, layout);
 		gdk_draw_layout(pixmap, widget->style->white_gc, x, y, layout);
-
+#endif
 		g_object_unref(G_OBJECT(layout));
 		}
 
