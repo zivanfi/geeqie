@@ -54,6 +54,10 @@ static void clear_mouse_cursor(GtkWidget *widget, gint state)
 	else
 		{
 		GdkCursor *cursor;
+
+#if GTK_CHECK_VERSION(2,16,0)
+		cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
+#else
 		GdkPixmap *p;
 
 		p = gdk_bitmap_create_from_data(widget->window, "\0\0\0", 1, 1);
@@ -62,12 +66,12 @@ static void clear_mouse_cursor(GtkWidget *widget, gint state)
 						    &widget->style->fg[GTK_STATE_ACTIVE],
 						    &widget->style->bg[GTK_STATE_ACTIVE],
 						    0, 0);
-
+		g_object_unref(p);
+#endif
 		gdk_window_set_cursor(widget->window, cursor);
 
 		gdk_cursor_unref(cursor);
-		g_object_unref(p);
-		}
+	}
 }
 
 static gboolean fullscreen_hide_mouse_cb(gpointer data)
