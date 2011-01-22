@@ -22,6 +22,7 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#include "compat.h"
 #include "ui_tree_edit.h"
 
 /*
@@ -164,7 +165,7 @@ static gboolean tree_edit_by_path_idle_cb(gpointer data)
 	/* explicitely set the focus flag for the entry, for some reason on popup windows this
 	 * is not set, and causes no edit cursor to appear ( popups not allowed focus? )
 	 */
-	GTK_WIDGET_SET_FLAGS(ted->entry, GTK_HAS_FOCUS);
+	setWidgetHasFocus(ted->entry, TRUE);
 	gtk_grab_add(ted->window);
 	gdk_pointer_grab(ted->window->window, TRUE,
 			 GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK,
