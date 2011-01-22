@@ -55,4 +55,41 @@ GList* hash_table_get_keys(GHashTable *hash_table)
 #endif
 }
 
+
+void setWidgetHasFocus(GtkWidget *widget, gboolean hasFocus)
+{
+	g_object_set(widget, "has-focus", hasFocus, NULL);
+
+	// These functions are deprecated in GTK+ 2.22, yet theme engines still look
+	// at these flags when determining if a widget has focus, so we must use them.
+	if (hasFocus)
+		(GTK_OBJECT (widget)->flags) |= GTK_HAS_FOCUS;
+	else
+		(GTK_OBJECT (widget)->flags) &= ~(GTK_HAS_FOCUS);
+}
+
+void setWidgetCanFocus(GtkWidget *widget, gboolean canFocus)
+{
+#if GTK_CHECK_VERSION(2,18,0)
+	gtk_widget_set_can_focus(widget, canFocus);
+#else
+	if (canFocus)
+ 		GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
+	else
+		GTK_WIDGET_UNSET_FLAGS(widget, GTK_CAN_FOCUS);
+#endif
+}
+
+void setWidgetCanDefault(GtkWidget *widget, gboolean canDefault)
+{
+#if GTK_CHECK_VERSION(2,18,0)
+	gtk_widget_set_can_default(widget, canDefault);
+#else
+	if (canDefault)
+ 		GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_DEFAULT);
+	else
+		GTK_WIDGET_UNSET_FLAGS(widget, GTK_CAN_DEFAULT);
+#endif
+}
+
 /* vim: set shiftwidth=8 softtabstop=0 cindent cinoptions={1s: */

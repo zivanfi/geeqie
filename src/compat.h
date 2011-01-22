@@ -15,6 +15,10 @@
 
 void radio_action_set_current_value(GtkRadioAction *action, gint current_value);
 GList* hash_table_get_keys(GHashTable *hash_table);
+void setWidgetHasFocus(GtkWidget *widget, gboolean hasFocus);
+void setWidgetCanFocus(GtkWidget *widget, gboolean canFocus);
+void setWidgetCanDefault(GtkWidget *widget, gboolean canDefault);
+
 
 #if !GTK_CHECK_VERSION(2,12,0)
 #define gtk_widget_set_tooltip_text(widget, text) /* ignored */
