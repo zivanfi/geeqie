@@ -926,7 +926,7 @@ static gboolean image_focus_in_cb(GtkWidget *widget, GdkEventFocus *event, gpoin
 {
 	ImageWindow *imd = data;
 
-	GTK_WIDGET_SET_FLAGS(imd->widget, GTK_HAS_FOCUS);
+	setWidgetHasFocus(imd->widget, TRUE);
 	image_focus_paint(imd, TRUE, NULL);
 
 	if (imd->func_focus_in)
@@ -941,7 +941,7 @@ static gboolean image_focus_out_cb(GtkWidget *widget, GdkEventFocus *event, gpoi
 {
 	ImageWindow *imd = data;
 
-	GTK_WIDGET_UNSET_FLAGS(imd->widget, GTK_HAS_FOCUS);
+	setWidgetHasFocus(imd->widget, FALSE);
 	image_focus_paint(imd, FALSE, NULL);
 
 	return TRUE;
@@ -1812,7 +1812,8 @@ void image_set_frame(ImageWindow *imd, gboolean frame)
 		g_signal_connect(G_OBJECT(imd->frame), "expose_event",
 		    		 G_CALLBACK(selectable_frame_expose_cb), NULL);
 
-		GTK_WIDGET_SET_FLAGS(imd->frame, GTK_CAN_FOCUS);
+		setWidgetCanFocus(imd->frame, TRUE);
+
 		g_signal_connect(G_OBJECT(imd->frame), "focus_in_event",
 				 G_CALLBACK(image_focus_in_cb), imd);
 		g_signal_connect(G_OBJECT(imd->frame), "focus_out_event",
