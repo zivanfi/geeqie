@@ -383,9 +383,14 @@ static void bookmark_menu_remove_cb(GtkWidget *widget, gpointer data)
 static void bookmark_menu_position_cb(GtkMenu *menu, gint *x, gint *y, gint *pushed_in, gpointer data)
 {
 	GtkWidget *button = data;
+	GdkWindow *window = gtk_widget_get_window(button);
+	GtkAllocation allocation;
 
-	gdk_window_get_origin(button->window, x, y);
-	*y += button->allocation.y + button->allocation.height;
+	if (!window) return;
+	
+	gtk_widget_get_allocation(button, &allocation);
+	gdk_window_get_origin(window, x, y);
+	*y += allocation.y + allocation.height;
 }
 
 static void bookmark_menu_popup(BookMarkData *bm, GtkWidget *button,
