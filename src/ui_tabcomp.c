@@ -688,7 +688,7 @@ static GtkWidget *tab_completion_create_complete_button(GtkWidget *entry, GtkWid
 	GdkPixbuf *pixbuf;
 
 	button = gtk_button_new();
-	GTK_WIDGET_UNSET_FLAGS(button, GTK_CAN_FOCUS);
+	setWidgetCanFocus(button, FALSE);
 	g_signal_connect(G_OBJECT(button), "size_allocate",
 			 G_CALLBACK(tab_completion_button_size_allocate), parent);
 	g_signal_connect(G_OBJECT(button), "clicked",

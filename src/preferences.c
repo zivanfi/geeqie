@@ -961,7 +961,7 @@ static void safe_delete_clear_cb(GtkWidget *widget, gpointer data)
 				    _("This will remove the trash contents."));
 	generic_dialog_add_button(gd, GTK_STOCK_OK, NULL, safe_delete_clear_ok_cb, TRUE);
 	entry = gtk_entry_new();
-	GTK_WIDGET_UNSET_FLAGS(entry, GTK_CAN_FOCUS);
+	setWidgetCanFocus(entry, FALSE);
 	gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
 	if (options->file_ops.safe_delete_path) gtk_entry_set_text(GTK_ENTRY(entry), options->file_ops.safe_delete_path);
 	gtk_box_pack_start(GTK_BOX(gd->vbox), entry, FALSE, FALSE, 0);
