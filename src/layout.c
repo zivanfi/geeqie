@@ -1893,7 +1893,7 @@ void layout_show_config_window(LayoutWindow *lw)
 	button = pref_button_new(NULL, GTK_STOCK_OK, NULL, FALSE,
 				 G_CALLBACK(layout_config_ok_cb), lc);
 	gtk_container_add(GTK_CONTAINER(hbox), button);
-	GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+	setWidgetCanDefault(button, TRUE);
 	gtk_widget_grab_default(button);
 	gtk_widget_show(button);
 
@@ -1908,13 +1908,13 @@ void layout_show_config_window(LayoutWindow *lw)
 	button = pref_button_new(NULL, GTK_STOCK_APPLY, NULL, FALSE,
 				 G_CALLBACK(layout_config_apply_cb), lc);
 	gtk_container_add(GTK_CONTAINER(hbox), button);
-	GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+	setWidgetCanDefault(button, TRUE);
 	gtk_widget_show(button);
 
 	button = pref_button_new(NULL, GTK_STOCK_CANCEL, NULL, FALSE,
 				 G_CALLBACK(layout_config_close_cb), lc);
 	gtk_container_add(GTK_CONTAINER(hbox), button);
-	GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+	setWidgetCanDefault(button, TRUE);
 	gtk_widget_show(button);
 
 	if (!generic_dialog_get_alternative_button_order(lc->configwindow))
