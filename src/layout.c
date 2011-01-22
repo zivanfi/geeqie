@@ -1902,7 +1902,7 @@ void layout_show_config_window(LayoutWindow *lw)
 	button = pref_button_new(NULL, GTK_STOCK_SAVE, NULL, FALSE,
 				 G_CALLBACK(layout_config_save_cb), NULL);
 	gtk_container_add(GTK_CONTAINER(hbox), button);
-	GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+	setWidgetCanDefault(button, TRUE);
 	gtk_widget_show(button);
 */	
 	button = pref_button_new(NULL, GTK_STOCK_APPLY, NULL, FALSE,

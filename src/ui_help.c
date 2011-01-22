@@ -249,7 +249,7 @@ GtkWidget *help_window_new(const gchar *title,
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(help_window_close), window);
 	gtk_container_add(GTK_CONTAINER(hbox), button);
-	GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+	setWidgetCanDefault(button, TRUE);
 	gtk_widget_grab_default(button);
 	gtk_widget_show(button);
 
