@@ -329,7 +329,7 @@ gboolean vdlist_set_fd(ViewDir *vd, FileData *dir_fd)
 		while (work && !found)
 			{
 			FileData *fd = work->data;
-			if (strcmp(old_path, fd->name) == 0) found = fd;
+			if (strcmp(old_path, fd->path) == 0) found = fd;
 			work = work->next;
 			}
 
