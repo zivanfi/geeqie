@@ -1423,6 +1423,7 @@ gint image_stereo_get(ImageWindow *imd)
 
 void image_stereo_set(ImageWindow *imd, gint stereo_mode)
 {
+	DEBUG_1("Setting stereo mode %04x for imd %p", stereo_mode, imd);  
 	pixbuf_renderer_stereo_set((PixbufRenderer *)imd->pr, stereo_mode);
 }
 
@@ -1680,6 +1681,8 @@ static void image_options_set(ImageWindow *imd)
 					NULL);
 
 	pixbuf_renderer_set_parent((PixbufRenderer *)imd->pr, (GtkWindow *)imd->top_window);
+	
+	image_stereo_set(imd, options->stereo.mode);
 }
 
 void image_options_sync(void)
