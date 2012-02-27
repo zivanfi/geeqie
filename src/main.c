@@ -801,9 +801,6 @@ gint main(gint argc, gchar *argv[])
 	DEBUG_1("%s main: pixbuf_inline_register_stock_icons", get_exec_time());	 
 	pixbuf_inline_register_stock_icons();
 
-	DEBUG_1("%s main: parse_command_line", get_exec_time());	 
-	parse_command_line(argc, argv);
-
 	DEBUG_1("%s main: mkdir_if_not_exists", get_exec_time());	 
 	/* these functions don't depend on config file */
 	mkdir_if_not_exists(get_rc_dir());
@@ -820,6 +817,9 @@ gint main(gint argc, gchar *argv[])
 
 	options = init_options(NULL);
 	setup_default_options(options);
+
+	DEBUG_1("%s main: parse_command_line", get_exec_time());
+	parse_command_line(argc, argv);
 
 	DEBUG_1("%s main: load_options", get_exec_time());	 
 	if (!load_options(options))
