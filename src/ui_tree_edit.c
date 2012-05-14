@@ -186,7 +186,7 @@ gboolean tree_edit_by_path(GtkTreeView *tree, GtkTreePath *tpath, gint column, c
 
 	if (!edit_func) return FALSE;
 #if GTK_CHECK_VERSION(2,20,0)
-	if (!gtk_widget_get_visible(tree)) return FALSE;
+	if (!gtk_widget_get_visible(GTK_WIDGET(tree))) return FALSE;
 #else
 	if (!GTK_WIDGET_VISIBLE(tree)) return FALSE;
 #endif

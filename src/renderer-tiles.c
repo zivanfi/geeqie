@@ -1615,7 +1615,7 @@ static gboolean rt_queue_draw_idle_cb(gpointer data)
 		}
 
 #if GTK_CHECK_VERSION(2,20,0)
-	if (gtk_widget_get_realized(pr))
+	if (gtk_widget_get_realized(GTK_WIDGET(pr)))
 #else
 	if (GTK_WIDGET_REALIZED(pr))
 #endif
