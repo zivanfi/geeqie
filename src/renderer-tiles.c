@@ -736,9 +736,10 @@ static OverlayData *rt_overlay_find(RendererTiles *rt, gint id)
 }
 
 
-gint renderer_tiles_overlay_add(RendererTiles *rt, GdkPixbuf *pixbuf, gint x, gint y,
+gint renderer_tiles_overlay_add(void *renderer, GdkPixbuf *pixbuf, gint x, gint y,
 				 OverlayRendererFlags flags)
 {
+	RendererTiles *rt = (RendererTiles *) renderer;
 	PixbufRenderer *pr = rt->pr;
 	OverlayData *od;
 	gint id;
@@ -809,8 +810,9 @@ static void rt_overlay_list_reset_window(RendererTiles *rt)
 		}
 }
 
-void renderer_tiles_overlay_set(RendererTiles *rt, gint id, GdkPixbuf *pixbuf, gint x, gint y)
+void renderer_tiles_overlay_set(void *renderer, gint id, GdkPixbuf *pixbuf, gint x, gint y)
 {
+	RendererTiles *rt = (RendererTiles *) renderer;
 	PixbufRenderer *pr = rt->pr;
 	OverlayData *od;
 
@@ -843,8 +845,9 @@ void renderer_tiles_overlay_set(RendererTiles *rt, gint id, GdkPixbuf *pixbuf, g
 		}
 }
 
-gboolean renderer_tiles_overlay_get(RendererTiles *rt, gint id, GdkPixbuf **pixbuf, gint *x, gint *y)
+gboolean renderer_tiles_overlay_get(void *renderer, gint id, GdkPixbuf **pixbuf, gint *x, gint *y)
 {
+	RendererTiles *rt = (RendererTiles *) renderer;
 	PixbufRenderer *pr = rt->pr;
 	OverlayData *od;
 
@@ -1882,8 +1885,9 @@ static void rt_queue(RendererTiles *rt, gint x, gint y, gint w, gint h,
 		}
 }
 
-static void rt_scroll(RendererTiles *rt, gint x_off, gint y_off)
+static void rt_scroll(void *renderer, gint x_off, gint y_off)
 {
+	RendererTiles *rt = (RendererTiles *) renderer;
 	PixbufRenderer *pr = rt->pr;
 
 	rt_sync_scroll(rt);
