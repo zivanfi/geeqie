@@ -876,7 +876,12 @@ GtkWidget *history_combo_new(GtkWidget **entry, const gchar *text,
 	hc->history_key = g_strdup(history_key);
 	hc->history_levels = max_levels;
 
+#if GTK_CHECK_VERSION(2,24,0)
+	hc->combo = gtk_combo_box_text_new_with_entry();
+#else
 	hc->combo = gtk_combo_box_entry_new_text();
+#endif
+
 #if 0
 	gtk_combo_set_case_sensitive(GTK_COMBO(hc->combo), TRUE);
 	gtk_combo_set_use_arrows(GTK_COMBO(hc->combo), FALSE);
@@ -892,7 +897,11 @@ GtkWidget *history_combo_new(GtkWidget **entry, const gchar *text,
 	work = history_list_get_by_key(hc->history_key);
 	while (work)
 		{
+#if GTK_CHECK_VERSION(2,24,0)
+		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(hc->combo), (gchar *)work->data);
+#else
 		gtk_combo_box_append_text(GTK_COMBO_BOX(hc->combo), (gchar *)work->data);
+#endif
 		work = work->next;
 		n++;
 		}
@@ -949,7 +958,11 @@ void history_combo_append_history(GtkWidget *widget, const gchar *text)
 		work = history_list_get_by_key(hc->history_key);
 		while (work)
 			{
+#if GTK_CHECK_VERSION(2,24,0)
+			gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(hc->combo), (gchar *)work->data);
+#else
 			gtk_combo_box_append_text(GTK_COMBO_BOX(hc->combo), (gchar *)work->data);
+#endif
 			work = work->next;
 			}
 		}
