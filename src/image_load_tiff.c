@@ -148,6 +148,9 @@ tiff_load_unmap_file (thandle_t handle, tdata_t data, toff_t offset)
 static gboolean image_loader_tiff_load (gpointer loader, const guchar *buf, gsize count, GError **error)
 {
 	ImageLoaderTiff *lt = (ImageLoaderTiff *) loader;
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+    int i;
+#endif
 
         TIFF *tiff;
 	guchar *pixels = NULL;
@@ -326,17 +329,17 @@ static gboolean image_loader_tiff_load (gpointer loader, const guchar *buf, gsiz
 		/* Turns out that the packing used by TIFFRGBAImage depends on 
         	 * the host byte order... 
 	         */ 
-		while (pixels < lt->pixbuf->pixels + bytes) 
+        for (i = 0; i < bytes;)
 			{
-			uint32 pixel = *(uint32 *)pixels;
+			uint32 pixel = *(uint32 *)(pixels + i);
 			int r = TIFFGetR(pixel);
 			int g = TIFFGetG(pixel);
 			int b = TIFFGetB(pixel);
 			int a = TIFFGetA(pixel);
-			*pixels++ = r;
-			*pixels++ = g;
-			*pixels++ = b;
-			*pixels++ = a;
+			pixels[i++] = r;
+			pixels[i++] = g;
+			pixels[i++] = b;
+			pixels[i++] = a;
 			}
 #endif
 
