@@ -292,6 +292,7 @@ gboolean editor_read_desktop_file(const gchar *path)
 		}
 
 	editor->exec = g_key_file_get_string(key_file, DESKTOP_GROUP, "Exec", NULL);
+	if (!editor->exec) editor->exec = g_strdup("");
 
 	editor->menu_path = g_key_file_get_string(key_file, DESKTOP_GROUP, "X-Geeqie-Menu-Path", NULL);
 	if (!editor->menu_path) editor->menu_path = g_strdup("EditMenu/ExternalMenu");
