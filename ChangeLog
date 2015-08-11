@@ -1,3 +1,50 @@
+commit 2c2e0f477a0fb9524235c90f9f7140e60e97319c
+Author: Michael Schwendt <mschwendt@gmail.com>
+Date:   Tue Aug 11 23:21:37 2015 +0100
+
+    NULL-ptr crash in image_read_ahead_done_cb()
+    
+    It's not easy to reproduce, but if one is mad and follows the steps and
+    presses the keys a few dozens times, there's a slight chance one can
+    trigger it. Not much to investigate it further.
+    
+    Forwarding from Sami Farin 2015-08-07 16:40:44 EDT:
+    
+     | to reproduce: quickly keep pressing f (fullscreen) and page down
+     | (next file) keys.
+     |
+     | attached patch is a kind of workaround, I did not inspect further
+     | is this threading issue etc
+    
+    Full backtrace: https://bugzilla.redhat.com/attachment.cgi?id=1027647
+    
+    Patch: https://bugzilla.redhat.com/attachment.cgi?id=1060482&action=diff&context=patch&collapsed=&headers=1&format=raw
+
+commit 0dfeec9a9a7298d4c5389bb9151a5ad8a8ab9ed4
+Author: Klaus Ethgen <Klaus@Ethgen.de>
+Date:   Tue Aug 11 23:19:25 2015 +0100
+
+    Remove over optimization
+    
+    Thanks Uwe Ohse <uwe@ohse.de> for this find.
+    
+    "it looks good, but is dead slow, for each and every call to
+    gdk_cairo_set_source_pixbuf takes at least 15 milliseconds on my not
+    really slow machine, which amounts to over 2 seconds if 144 tiles have
+    to be drawn (tested with many jpegs and a few large pngs).
+    
+    i propose to remove this optimization until someone fixes it. After
+    removal geeqie is fast, again."
+
+commit 3a1908c1db02aad60f9dc0f770c0761ef6499be8
+Author: Klaus Ethgen <Klaus@Ethgen.de>
+Date:   Sat Sep 27 12:07:10 2014 +0100
+
+    Fix lcms2 integration
+    
+    Thanks Michael Schwendt <mschwendt@gmail.com> for the bug reporting and
+    the patch.
+
 commit d6c33614c45e38845a0bcfd702e38e18d5dcec0b
 Merge: e79d354 dcf1a1b 0ac5716
 Author: Klaus Ethgen <Klaus@Ethgen.de>

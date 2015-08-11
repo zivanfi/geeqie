@@ -1,3 +1,10 @@
+Geeqie 1.2
+==========
+
+- Support for lcms2
+- Basic support for lua scripting (still documentation needed)
+- Several bugfixes
+
 Geeqie 1.1
 ==========
 
