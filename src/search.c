@@ -190,6 +190,16 @@ struct _SearchData
 	ThumbLoader *thumb_loader;
 	gboolean thumb_enable;
 	FileData *thumb_fd;
+
+	/* Used for lat/lon coordinate search
+	 */
+	gint search_gps;
+	gdouble search_lat, search_lon;
+	GtkWidget *label_gps_drop, *entry_gps_coord;
+	GtkWidget *check_gps;
+	GtkWidget *spin_gps;
+	GtkWidget *units_gps;
+	gboolean match_gps_enable;
 };
 
 typedef struct _MatchFileData MatchFileData;
@@ -1386,6 +1396,112 @@ static void search_dnd_begin(GtkWidget *widget, GdkDragContext *context, gpointe
 		}
 }
 
+/* Convert lat/lon from a signed double to a string of
+ * the format N 12° 34' 56.78"
+ */
+GString *search_gps_convert_coordinate(gdouble coordinate, const char *key)
+{
+	gint deg, min;
+	gdouble sec;
+	GString *message;
+	gchar *ref;
+
+	if (g_strcmp0(key, "Longitude") == 0)
+		if (coordinate < 0)
+			ref = "W";
+		else
+			ref = "E";
+	else if (g_strcmp0(key, "Latitude") == 0)
+		{
+		if (coordinate < 0)
+			{
+			ref = "S";
+			}
+		else
+			ref = "N";
+		}
+
+	if (coordinate < 0)
+		coordinate = -coordinate;
+	deg = coordinate;
+	min = (coordinate * 60) - (deg * 60);
+	sec = (coordinate * 3600) - ((deg * 3600) + (min * 60));
+
+	message = g_string_new("");
+	g_string_append_printf(message, "%s %i° %i\' %.2lf\"", ref, deg, min, sec);
+
+	return message;
+}
+
+/* Get the coordinates from the result of a drag-and-drop, and copy it into the
+ * user editable box. It will either be a string from a geonames.org search,
+ * or a file list from a drag from the geeqie layout window.
+ */
+GString *search_gps_extract_coordinates(GtkSelectionData *selection_data, gpointer data)
+{
+	gchar **latlon;
+	GString *message = g_string_new("");
+	gchar *str_ptr;
+	gdouble latitude, longitude;
+	GList *list;
+	FileData *fd;
+	SearchData *sd = data;
+	gchar **array = NULL;
+
+	array = gtk_selection_data_get_uris(selection_data);
+	if (array != NULL)
+		{
+		str_ptr = g_strstr_len(array[0], -1, "http://www.geonames.org/maps/google_");
+		if (str_ptr != NULL)
+			{
+			latlon = g_strsplit(g_strndup(str_ptr + 36, g_strrstr(str_ptr + 36, ".html") - str_ptr + 36), "_", 0);
+			latitude = g_ascii_strtod(latlon[0], NULL);
+			g_string_append(message, search_gps_convert_coordinate(latitude, "Latitude")->str);
+			g_string_append(message, "  ");
+
+			longitude = g_ascii_strtod(latlon[1], NULL);
+			g_string_append(message, search_gps_convert_coordinate(longitude, "Longitude")->str);
+
+			gtk_button_set_label(GTK_BUTTON(sd->label_gps_drop), "geonames.org");
+
+			g_strfreev(latlon);
+			}
+		else
+			{
+			list = uri_filelist_from_gtk_selection_data(selection_data);
+
+			/* If more than one file, use only the first file in a list.
+			 */
+			if (list != NULL)
+				{
+				fd = list->data;
+				latitude = metadata_read_GPS_coord(fd, "Xmp.exif.GPSLatitude", 1000);
+				longitude = metadata_read_GPS_coord(fd, "Xmp.exif.GPSLongitude", 1000);
+				if (latitude != 1000 && longitude != 1000)
+					{
+					g_string_append(message, search_gps_convert_coordinate(latitude, "Latitude")->str);
+					g_string_append(message, "  ");
+					g_string_append(message, search_gps_convert_coordinate(longitude, "Longitude")->str);
+					}
+				}
+			}
+		g_strfreev (array);
+		}
+
+	return message;
+
+}
+
+static void search_gps_dnd_received_cb(GtkWidget *pane, GdkDragContext *context,
+									  gint x, gint y,
+									  GtkSelectionData *selection_data, guint info,
+									  guint time, gpointer data)
+{
+	SearchData *sd = data;
+
+	gtk_entry_set_text(GTK_ENTRY(sd->entry_gps_coord), search_gps_extract_coordinates(selection_data, sd)->str);
+}
+
 static void search_dnd_init(SearchData *sd)
 {
 	gtk_drag_source_set(sd->result_view, GDK_BUTTON1_MASK | GDK_BUTTON2_MASK,
@@ -1395,6 +1511,18 @@ static void search_dnd_init(SearchData *sd)
 			 G_CALLBACK(search_dnd_data_set), sd);
 	g_signal_connect(G_OBJECT(sd->result_view), "drag_begin",
 			 G_CALLBACK(search_dnd_begin), sd);
+#if 0
+	g_signal_connect(G_OBJECT(sd->result_view), "drag_end",
+			 G_CALLBACK(search_dnd_end), sd);
+#endif
+
+	gtk_drag_dest_set(GTK_WIDGET(sd->entry_gps_coord),
+			  GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT | GTK_DEST_DEFAULT_DROP,
+			   result_drag_types, n_result_drag_types,
+			  GDK_ACTION_COPY);
+
+	g_signal_connect(G_OBJECT(sd->entry_gps_coord), "drag_data_received",
+			 G_CALLBACK(search_gps_dnd_received_cb), sd);
 }
 
 /*
@@ -1863,6 +1991,46 @@ static gboolean search_file_next(SearchData *sd)
 			}
 		}
 
+	/* Calculate the distance the image is from the specified origin.
+	 * This is a standard algorithm. A simplified one may be faster.
+	 */
+	#define RADIANS  0.0174532925
+	#define KM_EARTH_RADIUS 6371
+	#define MILES_EARTH_RADIUS 3959
+	#define NAUTICAL_MILES_EARTH_RADIUS 3440
+
+	gdouble latitude, longitude, range, conversion;
+
+	if (g_strcmp0(gtk_combo_box_text_get_active_text(GTK_COMBO_BOX(sd->units_gps)), _("km")) == 0)
+		{
+		conversion = KM_EARTH_RADIUS;
+		}
+	else if (g_strcmp0(gtk_combo_box_text_get_active_text(GTK_COMBO_BOX(sd->units_gps)), _("miles")) == 0)
+		{
+		conversion = MILES_EARTH_RADIUS;
+		}
+	else
+		{
+		conversion = NAUTICAL_MILES_EARTH_RADIUS;
+		}
+
+	if (match && sd->match_gps_enable && sd->search_lat && sd->search_lon)
+		{
+		tested = TRUE;
+		match = FALSE;
+
+		latitude = metadata_read_GPS_coord(fd, "Xmp.exif.GPSLatitude", 1000);
+		longitude = metadata_read_GPS_coord(fd, "Xmp.exif.GPSLongitude", 1000);
+		if (latitude != 1000 && longitude != 1000)
+			{
+			range = conversion * acos ( sin(latitude * RADIANS) * sin(sd->search_lat * RADIANS) +
+						cos(latitude * RADIANS) * cos(sd->search_lat * RADIANS) * cos((sd->search_lon - longitude) * RADIANS));
+
+			 if (sd->search_gps >= range)
+			 	match = TRUE;
+			}
+		}
+
 	if ((match || extra_only) &&
 	    (sd->match_dimensions_enable || sd->match_similarity_enable))
 		{
@@ -2095,6 +2263,10 @@ static void search_start_cb(GtkWidget *widget, gpointer data)
 	SearchData *sd = data;
 	GtkTreeViewColumn *column;
 	gchar *path;
+	gdouble deg_lat, min_lat, sec_lat, deg_lon, min_lon, sec_lon, latitude, longitude;
+	gchar north_south[35];
+	gchar east_west[35];
+	gchar *entry_text;
 
 	if (sd->search_folder_list)
 		{
@@ -2124,6 +2296,54 @@ static void search_start_cb(GtkWidget *widget, gpointer data)
 			}
 		tab_completion_append_to_history(sd->entry_similarity, sd->search_similarity_path);
 		}
+	/* Check the coordinate entry.
+	 * If the result is not sensible, it should get blocked.
+	 */
+	if (sd->match_gps_enable)
+		{
+		entry_text = g_strdup(gtk_entry_get_text(GTK_ENTRY(sd->entry_gps_coord)));
+		g_strstrip(entry_text);
+		if (entry_text != NULL && strlen(entry_text) <= 37)
+			{
+			g_strcanon(entry_text, "NSEW0123456789.", ' ');
+			sscanf(entry_text,"%s %lf %lf %lf %s %lf %lf  %lf",
+					north_south, &deg_lat, &min_lat, &sec_lat,
+					east_west, &deg_lon, &min_lon, &sec_lon);
+
+			latitude = deg_lat + min_lat / 60 + sec_lat / 3600;
+			longitude = deg_lon + min_lon / 60 + sec_lon / 3600;
+
+			if ((g_strcmp0(north_south, "N") == 0 || g_strcmp0(north_south, "S") == 0) &&
+					(g_strcmp0(east_west, "E") == 0 || g_strcmp0(east_west, "W") == 0) &&
+					(latitude <= 90.0) && (latitude >= -90.0) &&
+					(longitude <= 180.0) && (longitude >= -180.0))
+				{
+				if (g_strcmp0(north_south, "S") == 0)
+					latitude = -latitude;
+				if (g_strcmp0(east_west, "W") == 0)
+					longitude = -longitude;
+				sd->search_lat = latitude;
+				sd->search_lon = longitude;
+				}
+			else
+				{
+				file_util_warning_dialog(_("Entry does not contain a valid lat/lon value"),
+							 _("Please enter a coordinate in the form:N \n12° 34' 56.78\" W  12° 34' 56.78\" \n or\n 12 34 56.78 W  12 34 56.78 \n or drag-and-drop"),
+							 GTK_STOCK_DIALOG_WARNING, sd->window);
+				return;
+				}
+			}
+		else
+			{
+			file_util_warning_dialog(_("Entry does not contain a valid lat/lon value"),
+						 _("Please enter a coordinate in the form:N \n12° 34' 56.78\" W  12° 34' 56.78\" \n or\nN 12 34 56.78 W 12 34 56.78 \\n or drag-and-drop"),
+						 GTK_STOCK_DIALOG_WARNING, sd->window);
+			return;
+			}
+		g_free(entry_text);
+		}
+
+
 
 	string_list_free(sd->search_keyword_list);
 	sd->search_keyword_list = keyword_list_pull(sd->entry_keywords);
@@ -2579,6 +2799,7 @@ void search_new(FileData *dir_fd, FileData *example_file)
 	sd->match_name_enable = TRUE;
 
 	sd->search_similarity = 95;
+	sd->search_gps = 1;
 
 	if (example_file)
 		{
@@ -2737,6 +2958,45 @@ void search_new(FileData *dir_fd, FileData *example_file)
 	gtk_widget_show(sd->entry_comment);
 	pref_checkbox_new_int(hbox, _("Match case"),
 			      sd->search_comment_match_case, &sd->search_comment_match_case);
+
+	/* Search for images within a specified range of a lat/lon coordinate
+	 */
+	hbox = menu_choice(sd->box_search, &sd->check_gps, NULL,
+					   _("Image is within"), &sd->match_gps_enable,
+					   NULL, 0, NULL, sd);
+	sd->spin_gps = menu_spin(hbox, 1, 9999, sd->search_gps,
+					G_CALLBACK(menu_choice_spin_cb), &sd->search_gps);
+	gtk_drag_dest_unset(sd->spin_gps);
+
+	sd->units_gps = gtk_combo_box_text_new();
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX(sd->units_gps), _("km"));
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX(sd->units_gps), _("miles"));
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX(sd->units_gps), _("n.m."));
+	gtk_box_pack_start(GTK_BOX(hbox), sd->units_gps, FALSE, FALSE, 0);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(sd->units_gps), 0);
+	gtk_widget_set_tooltip_text(sd->units_gps, "kilometres, miles or nautical miles");
+	gtk_widget_show(sd->units_gps);
+
+	pref_label_new(hbox, _("of"));
+
+	sd->entry_gps_coord = gtk_entry_new();
+	gtk_editable_set_editable(GTK_EDITABLE(sd->entry_gps_coord), TRUE);
+	gtk_widget_set_has_tooltip(sd->entry_gps_coord, TRUE);
+	gtk_widget_set_tooltip_text(sd->entry_gps_coord, _("Enter a coordinate in the form:\nN 12° 34' 56.78\" W  12° 34' 56.78\" \n or\nN 12 34 56.78 W  12 34 56.78 \n or drag-and-drop"));
+	gtk_box_pack_start(GTK_BOX(hbox), sd->entry_gps_coord, TRUE, TRUE, 0);
+	gtk_widget_set_sensitive(sd->entry_gps_coord, TRUE);
+	gtk_drag_dest_unset(sd->entry_gps_coord);
+
+	sd->label_gps_drop = gtk_link_button_new_with_label("http://www.geonames.org", _("geonames.org"));
+	gtk_widget_set_has_tooltip(sd->label_gps_drop, TRUE);
+	gtk_widget_set_tooltip_text(sd->label_gps_drop, _("Drag a placename from a www.geonames.org search, \n or drag a geocoded thumbnail onto the adjoining box.\n\n Click to start a www.geonames.org search."));
+	gtk_box_pack_start(GTK_BOX(hbox), sd->label_gps_drop, TRUE, TRUE, 0);
+	gtk_widget_set_sensitive(sd->label_gps_drop, FALSE);
+
+	g_signal_connect(G_OBJECT(sd->check_gps), "toggled",
+						G_CALLBACK(menu_choice_check_cb), sd->label_gps_drop);
+	gtk_widget_show(sd->label_gps_drop);
+	gtk_widget_show(sd->entry_gps_coord);
 
 	/* Done the types of searches */
 

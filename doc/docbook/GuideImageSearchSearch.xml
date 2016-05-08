@@ -52,20 +52,20 @@
       Each search parameter can be enabled or disabled with the check box to it's left. For a file to be a match, all enabled parameters must be true.
     </para>
     <variablelist><varlistentry><term>
-        File name
-      </term><listitem><para/></listitem></varlistentry></variablelist>
+    <emphasis role="strong">File name</emphasis>
+    </term><listitem><para/></listitem></varlistentry></variablelist>
     <para>
       The search will match if the entered text appears within the file name, or if the text exactly matches the file name, depending on the method selected from the drop down menu. The text comparison can be made to be case sensitive by enabling the Match case checkbox.
     </para>
     <variablelist><varlistentry><term>
-        File size
-      </term><listitem><para/></listitem></varlistentry></variablelist>
+    <emphasis role="strong">File size</emphasis>
+    </term><listitem><para/></listitem></varlistentry></variablelist>
     <para>
       The search will match if the file size on disk is equal to, less than, greater than, or between the entered value, depending on the method selected from the drop down menu. The between test is inclusive, for example a file of size 10 will match if the size parameters are between 10 and 15.
     </para>
     <variablelist><varlistentry><term>
-        File date
-      </term><listitem><para/></listitem></varlistentry></variablelist>
+    <emphasis role="strong">File date</emphasis>
+    </term><listitem><para/></listitem></varlistentry></variablelist>
     <para>
       The search will match if the file modification time on disk is equal to, before, after, or between the entered date, depending on the method selected from the drop down menu. The between test is inclusive, for example a file with date of 10/04/2003 will match if the date parameters are between 10/04/2003 and 12/31/2003.
     </para>
@@ -73,8 +73,8 @@
       For convenience, the button with the down arrow displays a pop up calendar to enter the date.
     </para>
     <variablelist><varlistentry><term>
-        Image dimensions
-      </term><listitem><para/></listitem></varlistentry></variablelist>
+    <emphasis role="strong">Image dimensions</emphasis>
+    </term><listitem><para/></listitem></varlistentry></variablelist>
     <para>
       The search will match if the image dimensions are equal to, less than, greater than, or between the entered values, depending on the method selected from the drop down menu. The between test is inclusive.
     </para>
@@ -82,18 +82,41 @@
       The image dimensions test is simple, both width and height must be within the allowed values for a match.
     </para>
     <variablelist><varlistentry><term>
-        Image content
-      </term><listitem><para/></listitem></varlistentry></variablelist>
+    <emphasis role="strong">Image content</emphasis>
+    </term><listitem><para/></listitem></varlistentry></variablelist>
     <para>
       The search will match if the image contents are similar within the percentage value, inclusive. This uses the same test and data that is used to determine image similarity when <link linkend="GuideImageSearchFindingDuplicates">Finding Duplicates</link>. The entry is for entering the path for the image to use in this test.
     </para>
     <variablelist><varlistentry><term>
-        Keywords
-      </term><listitem><para/></listitem></varlistentry></variablelist>
+    <emphasis role="strong">Keywords</emphasis>
+    </term><listitem><para/></listitem></varlistentry></variablelist>
     <para>
       The search will match if the file's associated keywords match all, match any, or exclude the entered keywords, depending on the method selected from the drop down menu. Keywords can be separated with a space, comma, or tab character.
     </para>
-    <para/></section><section id="Resultslist"><title>
+    <variablelist><varlistentry><term>
+    <emphasis role="strong">Comment</emphasis>
+    </term><listitem><para/></listitem></varlistentry></variablelist>
+    <para>
+      The search will match if the file's associated Comment contains, or does not contain, the entered text, depending on the method selected from the drop down menu.
+    </para>
+    <variablelist><varlistentry><term>
+    <emphasis role="strong">Location</emphasis>
+    </term><listitem><para/></listitem></varlistentry></variablelist>
+    <para>
+      The search will match if the file's GPS location is within a range of a geographical point.
+    </para><para>Via a drop-down box, the range may be specified in kilometres, miles or nautical miles.
+    </para><para>The centre point of the search may be defined by:
+    </para>
+    <itemizedlist spacing="compact"><listitem><para>Typing in a latitude/longitude or by cut-and-paste from an internet search.
+    </para><para>The format must be of the form:
+    </para><para>N 12° 34' 56.78" W  12° 34' 56.78" or
+    </para><para>N 12 34 56.78 W 12 34 56.78
+    </para></listitem><listitem><para>Drag and drop a geocoded image onto the text box.
+    </para></listitem><listitem><para>Drag and drop a hyperlink place-name from a geonames.org search.
+    </para><para>Currently only searches from geonames.org are supported.
+    </para><para>A button which calls up a geonames.org search is provided as a convenience.
+    </para></listitem></itemizedlist>
+    </section><section id="Resultslist"><title>
       Results list
     </title>
     <para>
