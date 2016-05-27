@@ -1,5 +1,5 @@
       ###################################################################
-      ##                          Geeqie x.x                           ##
+      ##                          Geeqie 1.3                           ##
       ##                                                               ##
       ##              Copyright (C) 2008 - 2016 The Geeqie Team        ##
       ##              Copyright (C) 1999 - 2006 John Ellis.            ##
@@ -551,16 +551,6 @@ Overlay info format string syntax is: %tag[:max_length][:extra]%
 
      Kjell Morgenstern
          for random slide show speedup patch
-
-     Klaus Ethgen <Klaus@Ethgen.de>
-	 for GPS integration, Search enhancement, Lua integration and other
-	 patches
-
-     Colin Clark <cclark@mcb.net>
-	 for GPS map integration and more
-
-     Colin Clark <cclark@mcb.net>
-	 for GPS map support and more
 
      And...
          Thanks to the users for finding Geeqie useful.
