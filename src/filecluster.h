@@ -21,25 +21,6 @@
 
 #include "main.h"
 
-typedef struct _FileCluster FileCluster;
-typedef struct _FileClusterList FileClusterList;
-
-// A FileCluster is a GList with HashTable access to each node (to perform contains() checks quickly).
-struct _FileCluster
-{
-	GList *head;
-	GList *items;
-};
-
-struct _FileClusterList
-{
-	// All of the elements in the list, regardless of whether they're part of a cluster or not.
-	GList *fd_list;
-
-	// A map from any clustered FileData to the FileCluster object that describes the cluster.
-	GHashTable *clusters;
-};
-
 FileClusterList *fileclusterlist_new();
 FileCluster *filecluster_new();  // internal?
 void fileclusterlist_free(FileClusterList *fcl);
