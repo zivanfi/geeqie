@@ -25,6 +25,7 @@
 #include "collect.h"
 #include "collect-table.h"
 #include "editors.h"
+#include "filecluster.h"
 #include "layout.h"
 #include "menu.h"
 #include "thumb.h"
@@ -673,6 +674,7 @@ static void vf_destroy_cb(GtkWidget *widget, gpointer data)
 		gtk_widget_destroy(vf->popup);
 		}
 
+	fileclusterlist_free(vf->cluster_list);
 	file_data_unref(vf->dir_fd);
 	g_free(vf->info);
 	g_free(vf);
@@ -729,6 +731,7 @@ ViewFile *vf_new(FileViewType type, FileData *dir_fd)
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(vf->scrolled),
 				       GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 
+	vf->cluster_list = fileclusterlist_new();
 	vf->filter = vf_marks_filter_init(vf);
 
 	vf->widget = gtk_vbox_new(FALSE, 0);

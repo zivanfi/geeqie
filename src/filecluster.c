@@ -18,6 +18,8 @@
 
 #include "filecluster.h"
 
+#include "filedata.h"
+
 static gboolean check_list_contains_sublist(GList *haystack, GList *needle)
 {
 	// TODO(xsdg): Optimize this!  Sort, then scan?
@@ -66,17 +68,31 @@ void filecluster_free(FileCluster *fc)
 FileCluster *fileclusterlist_create_cluster(FileClusterList *fcl, GList *fd_items)
 {
 	GList *work;
+
+	// Check preconditions.
 	if (!fd_items) return NULL;
-	if (!check_list_contains_sublist(fcl->fd_list, fd_items)) return NULL;
+	// TODO(xsdg): Is this actually necessary?
+	// if (!check_list_contains_sublist(fcl->fd_list, fd_items)) return NULL;
 	for (work = fd_items; work; work = work->next)
-	{
+		{
 		FileData *fd = work->data;
-		if (g_hash_table_contains(fcl->clusters, fd)) return NULL;
-	}
+		if (g_hash_table_contains(fcl->clusters, fd))
+			{
+			// TODO(xsdg): Show this warning in the UI.
+			g_warning("Tried to create a cluster with a file that is already clustered.");
+			return NULL;
+			}
+		}
 
 	FileCluster *new_fc = filecluster_new();
 	new_fc->items = g_list_copy(fd_items);
 	new_fc->head = new_fc->items;
+
+	for (GList *item = new_fc->items; item; item = item->next)
+		{
+		FileData *fd = item->data;
+		g_hash_table_insert(fcl->clusters, fd, new_fc);
+		}
 
 	return new_fc;
 }
@@ -93,4 +109,26 @@ gboolean fileclusterlist_has_child(FileClusterList *fcl, FileData *fd)
 	FileCluster *fc = g_hash_table_lookup(fcl->clusters, fd);
 	if (!fc) return FALSE;
 	return fc->head->data != fd;
+}
+
+GList *filecluster_remove_children_from_list(FileClusterList *fcl, GList *list)
+{
+	GList *work = list;
+
+	while (work)
+	{
+		FileData *fd = work->data;
+		GList *link = work;
+		// Advance early in case link needs to be removed/freed.
+		work = work->next;
+
+		if (fileclusterlist_has_child(fcl, fd))
+		{
+			list = g_list_remove_link(list, link);
+			file_data_unref(fd);
+			g_list_free(link);
+		}
+	}
+
+	return list;
 }

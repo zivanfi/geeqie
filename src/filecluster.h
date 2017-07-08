@@ -34,5 +34,6 @@ FileCluster *fileclusterlist_create_cluster(FileClusterList *fcl, GList *fd_item
 gboolean fileclusterlist_has_head(FileClusterList *fcl, FileData *fd);
 gboolean fileclusterlist_has_child(FileClusterList *fcl, FileData *fd);
 
+GList *filecluster_remove_children_from_list(FileClusterList *fcl, GList *list);
 
 #endif  // FILECLUSTER_H
