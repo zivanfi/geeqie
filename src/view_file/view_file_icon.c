@@ -1267,7 +1267,6 @@ gboolean vficon_press_key_cb(GtkWidget *widget, GdkEventKey *event, gpointer dat
 					fc = fileclusterlist_create_cluster(vf->cluster_list, VFICON(vf)->selection);
 					if (fc)
 						{
-						// TODO(xsdg): set CLUSTER_CHILD
 						vficon_selection_add(vf, VFICON(vf)->selection->data, SELECTION_CLUSTER_HEAD, NULL);
 						vf_refresh(vf);
 						}
@@ -1293,7 +1292,18 @@ gboolean vficon_press_key_cb(GtkWidget *widget, GdkEventKey *event, gpointer dat
 				FileCluster *fc = g_hash_table_lookup(vf->cluster_list->clusters, fd);
 				if (fc)
 					{
-					filecluster_toggle_show_children(fc);
+					if (filecluster_toggle_show_children(fc))
+						{
+						for (GList *work = fc->items; work; work = work->next)
+							{
+							// TODO(xsdg): This is broken because the FileData pointer stored in the
+							// cluster is different from the one just added to vf->list, even though
+							// they are equivalent.
+							FileData *fd = work->data;
+							if (work == fc->head) continue;
+							vficon_selection_add(vf, fd, SELECTION_CLUSTER_CHILD, NULL);
+							}
+						}
 					vf_refresh(vf);
 					}
 				}
