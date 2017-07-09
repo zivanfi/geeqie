@@ -1261,9 +1261,16 @@ gboolean vficon_press_key_cb(GtkWidget *widget, GdkEventKey *event, gpointer dat
 				// Make a cluster out of the entire selection
 				if (VFICON(vf)->selection && VFICON(vf)->selection->next)
 					{
+					FileCluster *fc;
 					// At least two items selected; go for it.
 					g_warning("Had requisite number of selection items; going for it!");
-					fileclusterlist_create_cluster(vf->cluster_list, VFICON(vf)->selection);
+					fc = fileclusterlist_create_cluster(vf->cluster_list, VFICON(vf)->selection);
+					if (fc)
+						{
+						// TODO(xsdg): set CLUSTER_CHILD
+						vficon_selection_add(vf, VFICON(vf)->selection->data, SELECTION_CLUSTER_HEAD, NULL);
+						vf_refresh(vf);
+						}
 					}
 				else
 					{
@@ -1275,6 +1282,19 @@ gboolean vficon_press_key_cb(GtkWidget *widget, GdkEventKey *event, gpointer dat
 						{
 						g_warning("No items selected; need at least two.");
 						}
+					}
+				}
+			break;
+		case GDK_KEY_F2:
+			g_warning("Flipping show_children!");
+			fd = vficon_find_data(vf, VFICON(vf)->focus_row, VFICON(vf)->focus_column, NULL);
+			if (fd)
+				{
+				FileCluster *fc = g_hash_table_lookup(vf->cluster_list->clusters, fd);
+				if (fc)
+					{
+					filecluster_toggle_show_children(fc);
+					vf_refresh(vf);
 					}
 				}
 			break;
@@ -1824,7 +1844,7 @@ static gboolean vficon_refresh_real(ViewFile *vf, gboolean keep_position)
 		{
 		ret = filelist_read(vf->dir_fd, &new_filelist, NULL);
 		new_filelist = file_data_filter_marks_list(new_filelist, vf_marks_get_filter(vf));
-		new_filelist = filecluster_remove_children_from_list(vf->cluster_list, new_filelist);
+		new_filelist = fileclusterlist_remove_children_from_list(vf->cluster_list, new_filelist);
 		}
 
 	/* the list might not be sorted if there were renames */
@@ -2001,6 +2021,21 @@ static void vficon_cell_data_cb(GtkTreeViewColumn *tree_column, GtkCellRenderer 
 
 		memcpy(&color_fg, &style->text[state], sizeof(color_fg));
 		memcpy(&color_bg, &style->base[state], sizeof(color_bg));
+
+		if (fd->selected & SELECTION_CLUSTER_HEAD)
+			{
+			// TODO(xsdg): Cluster coloration should be part of the style.
+			color_bg.blue = 0x4000;
+			color_bg.green = 0x4000;
+			color_bg.red = 0xFFFF;
+			}
+		else if (fd->selected & SELECTION_CLUSTER_CHILD)
+			{
+			// TODO(xsdg): Cluster coloration should be part of the style.
+			color_bg.blue = 0x8000;
+			color_bg.green = 0x8000;
+			color_bg.red = 0xFFFF;
+			}
 
 		if (fd->selected & SELECTION_PRELIGHT)
 			{

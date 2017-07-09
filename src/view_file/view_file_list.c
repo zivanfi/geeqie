@@ -1669,7 +1669,7 @@ gboolean vflist_refresh(ViewFile *vf)
 			}
 
 		vf->list = file_data_filter_marks_list(vf->list, vf_marks_get_filter(vf));
-		vf->list = filecluster_remove_children_from_list(vf->cluster_list, vf->list);
+		vf->list = fileclusterlist_remove_children_from_list(vf->cluster_list, vf->list);
 		file_data_register_notify_func(vf_notify_cb, vf, NOTIFY_PRIORITY_MEDIUM);
 
 		DEBUG_1("%s vflist_refresh: sort", get_exec_time());

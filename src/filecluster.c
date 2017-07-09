@@ -42,27 +42,52 @@ static gboolean check_list_contains_sublist(GList *haystack, GList *needle)
 	return TRUE;
 }
 
+static gboolean filecluster_fd_equal(gconstpointer ptr_a, gconstpointer ptr_b)
+{
+	// TODO(xsdg): Is there anything we can/should do to validate inputs?
+	FileData *fd_a = (FileData *)ptr_a;
+	FileData *fd_b = (FileData *)ptr_b;
+	return !filelist_sort_compare_filedata(fd_a, fd_b);
+}
+
+// TODO(xsdg): Move this into filedata.h
+static guint filecluster_fd_hash(gconstpointer ptr)
+{
+	if (!ptr) return 1;
+	FileData *fd = (FileData *)ptr;
+	return 7 * g_str_hash(fd->original_path);
+}
+
 FileClusterList *fileclusterlist_new()
 {
 	FileClusterList *fcl = g_new0(FileClusterList, 1);
-	fcl->clusters = g_hash_table_new(&g_direct_hash, &g_direct_equal);
+	fcl->clusters = g_hash_table_new(&filecluster_fd_hash, &filecluster_fd_equal);
 }
 
 FileCluster *filecluster_new()
 {
 	FileCluster *fc = g_new0(FileCluster, 1);
+	fc->show_children = FALSE;
 }
 
 void fileclusterlist_free(FileClusterList *fcl)
 {
-	if (fcl->fd_list) g_list_free_full(fcl->fd_list, (GDestroyNotify)&filecluster_free);
+	// TODO(xsdg): don't leak stuff
+	// if (fcl->fd_list) g_list_free_full(fcl->fd_list, (GDestroyNotify)&filecluster_free);
 	g_hash_table_destroy(fcl->clusters);
 	g_free(fcl);
 }
 
 void filecluster_free(FileCluster *fc)
 {
+	filelist_free(fc->items);
 	g_free(fc);
+}
+
+gboolean filecluster_toggle_show_children(FileCluster *fc)
+{
+	fc->show_children = !fc->show_children;
+	return fc->show_children;
 }
 
 FileCluster *fileclusterlist_create_cluster(FileClusterList *fcl, GList *fd_items)
@@ -71,8 +96,6 @@ FileCluster *fileclusterlist_create_cluster(FileClusterList *fcl, GList *fd_item
 
 	// Check preconditions.
 	if (!fd_items) return NULL;
-	// TODO(xsdg): Is this actually necessary?
-	// if (!check_list_contains_sublist(fcl->fd_list, fd_items)) return NULL;
 	for (work = fd_items; work; work = work->next)
 		{
 		FileData *fd = work->data;
@@ -85,7 +108,7 @@ FileCluster *fileclusterlist_create_cluster(FileClusterList *fcl, GList *fd_item
 		}
 
 	FileCluster *new_fc = filecluster_new();
-	new_fc->items = g_list_copy(fd_items);
+	new_fc->items = filelist_copy(fd_items);
 	new_fc->head = new_fc->items;
 
 	for (GList *item = new_fc->items; item; item = item->next)
@@ -111,7 +134,31 @@ gboolean fileclusterlist_has_child(FileClusterList *fcl, FileData *fd)
 	return fc->head->data != fd;
 }
 
-GList *filecluster_remove_children_from_list(FileClusterList *fcl, GList *list)
+static gboolean fileclusterlist_should_hide(FileClusterList *fcl, FileData *fd)
+{
+	FileCluster *fc = g_hash_table_lookup(fcl->clusters, fd);
+	if (!fc) return FALSE;
+	if (fc->show_children) return FALSE;  // TODO(xsdg): new function "should_show"
+	return fc->head->data != fd;
+}
+
+// TODO(xsdg): pick a better name for this function
+GList *fileclusterlist_next_non_child(FileClusterList *fcl, GList *list)
+{
+	// Check for no-ops
+	if (!list || !g_hash_table_size(fcl->clusters)) return list;
+
+	// Clusters are being used, so we have to actually check things.
+	for (; list; list = list->next)
+	{
+		FileData *fd = list->data;
+		if (!fileclusterlist_has_child(fcl, fd)) return list;
+	}
+
+	return NULL;
+}
+
+GList *fileclusterlist_remove_children_from_list(FileClusterList *fcl, GList *list)
 {
 	GList *work = list;
 
@@ -122,7 +169,7 @@ GList *filecluster_remove_children_from_list(FileClusterList *fcl, GList *list)
 		// Advance early in case link needs to be removed/freed.
 		work = work->next;
 
-		if (fileclusterlist_has_child(fcl, fd))
+		if (fileclusterlist_should_hide(fcl, fd))
 		{
 			list = g_list_remove_link(list, link);
 			file_data_unref(fd);

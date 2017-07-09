@@ -496,6 +496,7 @@ gint tree_path_to_row(GtkTreePath *tpath)
 void shift_color(GdkColor *src, gshort val, gint direction)
 {
 	gshort cs;
+	static gshort COLOR_MAX = 0xffff;
 
 	if (val == -1)
 		{
@@ -505,11 +506,11 @@ void shift_color(GdkColor *src, gshort val, gint direction)
 		{
 		val = CLAMP(val, 1, 100);
 		}
-	cs = 0xffff / 100 * val;
+	cs = COLOR_MAX / 100 * val;
 
 	/* up or down ? */
 	if (direction < 0 ||
-	    (direction == 0 &&((gint)src->red + (gint)src->green + (gint)src->blue) / 3 > 0xffff / 2))
+	    (direction == 0 &&((gint)src->red + (gint)src->green + (gint)src->blue) / 3 > COLOR_MAX / 2))
 		{
 		src->red = MAX(0 , src->red - cs);
 		src->green = MAX(0 , src->green - cs);
@@ -517,9 +518,9 @@ void shift_color(GdkColor *src, gshort val, gint direction)
 		}
 	else
 		{
-		src->red = MIN(0xffff, src->red + cs);
-		src->green = MIN(0xffff, src->green + cs);
-		src->blue = MIN(0xffff, src->blue + cs);
+		src->red = MIN(COLOR_MAX, src->red + cs);
+		src->green = MIN(COLOR_MAX, src->green + cs);
+		src->blue = MIN(COLOR_MAX, src->blue + cs);
 		}
 }
 

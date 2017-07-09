@@ -256,7 +256,9 @@ typedef enum {
 	SELECTION_NONE		= 0,
 	SELECTION_SELECTED	= 1 << 0,
 	SELECTION_PRELIGHT	= 1 << 1,
-	SELECTION_FOCUS		= 1 << 2
+	SELECTION_FOCUS		= 1 << 2,
+	SELECTION_CLUSTER_HEAD	= 1 << 3,
+	SELECTION_CLUSTER_CHILD = 1 << 4
 } SelectionType;
 
 typedef struct _ImageLoader ImageLoader;
@@ -537,13 +539,11 @@ struct _FileCluster
 {
 	GList *head;
 	GList *items;
+	gboolean show_children;
 };
 
 struct _FileClusterList
 {
-	// All of the elements in the list, regardless of whether they're part of a cluster or not.
-	GList *fd_list;
-
 	// A map from any clustered FileData to the FileCluster object that describes the cluster.
 	GHashTable *clusters;
 };

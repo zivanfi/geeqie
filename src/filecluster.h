@@ -26,6 +26,8 @@ FileCluster *filecluster_new();  // internal?
 void fileclusterlist_free(FileClusterList *fcl);
 void filecluster_free(FileCluster *fc);
 
+gboolean filecluster_toggle_show_children(FileCluster *fc);
+
 // Creates a cluster with items that must already be in the cluster list.  Will fail (and make no
 // changes) if any of the specified items isn't in the list, or if any of the items is already
 // part of a different cluster.
@@ -34,6 +36,7 @@ FileCluster *fileclusterlist_create_cluster(FileClusterList *fcl, GList *fd_item
 gboolean fileclusterlist_has_head(FileClusterList *fcl, FileData *fd);
 gboolean fileclusterlist_has_child(FileClusterList *fcl, FileData *fd);
 
-GList *filecluster_remove_children_from_list(FileClusterList *fcl, GList *list);
+GList *fileclusterlist_next_non_child(FileClusterList *fcl, GList *list);
+GList *fileclusterlist_remove_children_from_list(FileClusterList *fcl, GList *list);
 
 #endif  // FILECLUSTER_H
