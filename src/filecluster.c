@@ -124,22 +124,24 @@ gboolean fileclusterlist_has_head(FileClusterList *fcl, FileData *fd)
 {
 	FileCluster *fc = g_hash_table_lookup(fcl->clusters, fd);
 	if (!fc) return FALSE;
-	return fc->head->data == fd;
+	return filecluster_fd_equal(fc->head->data, fd);
 }
 
 gboolean fileclusterlist_has_child(FileClusterList *fcl, FileData *fd)
 {
 	FileCluster *fc = g_hash_table_lookup(fcl->clusters, fd);
 	if (!fc) return FALSE;
-	return fc->head->data != fd;
+	return !filecluster_fd_equal(fc->head->data, fd);
 }
 
 static gboolean fileclusterlist_should_hide(FileClusterList *fcl, FileData *fd)
 {
 	FileCluster *fc = g_hash_table_lookup(fcl->clusters, fd);
 	if (!fc) return FALSE;
-	if (fc->show_children) return FALSE;  // TODO(xsdg): new function "should_show"
-	return fc->head->data != fd;
+	// Only difference vs. fileclusterlist_has_child.  Basically, if the node is a child, but
+	// we're showing children, then don't hide.
+	if (fc->show_children) return FALSE;
+	return !filecluster_fd_equal(fc->head->data, fd);
 }
 
 // TODO(xsdg): pick a better name for this function
