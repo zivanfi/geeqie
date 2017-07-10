@@ -62,12 +62,14 @@ FileClusterList *fileclusterlist_new()
 {
 	FileClusterList *fcl = g_new0(FileClusterList, 1);
 	fcl->clusters = g_hash_table_new(&filecluster_fd_hash, &filecluster_fd_equal);
+	return fcl;
 }
 
 FileCluster *filecluster_new()
 {
 	FileCluster *fc = g_new0(FileCluster, 1);
 	fc->show_children = FALSE;
+	return fc;
 }
 
 void fileclusterlist_free(FileClusterList *fcl)
