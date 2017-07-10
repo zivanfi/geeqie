@@ -47,3 +47,5 @@ GList *fileclusterlist_next_non_child(FileClusterList *fcl, GList *list);
 GList *fileclusterlist_remove_children_from_list(FileClusterList *fcl, GList *list);
 
 #endif  // FILECLUSTER_H
+
+/* vim: set shiftwidth=8 softtabstop=0 cindent cinoptions={1s: */

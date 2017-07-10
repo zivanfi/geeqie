@@ -195,3 +195,5 @@ GList *fileclusterlist_remove_children_from_list(FileClusterList *fcl, GList *li
 
 	return list;
 }
+
+/* vim: set shiftwidth=8 softtabstop=0 cindent cinoptions={1s: */
