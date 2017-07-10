@@ -21,12 +21,19 @@
 
 #include "main.h"
 
-FileClusterList *fileclusterlist_new();
+// FileCluster methods.
 FileCluster *filecluster_new();  // internal?
-void fileclusterlist_free(FileClusterList *fcl);
 void filecluster_free(FileCluster *fc);
 
 gboolean filecluster_toggle_show_children(FileCluster *fc);
+gboolean filecluster_has_head(FileCluster *fc, FileData *fd);
+gboolean filecluster_has_child(FileCluster *fc, FileData *fd);
+
+
+// FileClusterList methods.
+
+FileClusterList *fileclusterlist_new();
+void fileclusterlist_free(FileClusterList *fcl);
 
 // Creates a cluster with items that must already be in the cluster list.  Will fail (and make no
 // changes) if any of the specified items isn't in the list, or if any of the items is already

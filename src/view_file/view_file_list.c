@@ -981,9 +981,14 @@ static void vflist_setup_iter_recursive(ViewFile *vf, GtkTreeStore *store, GtkTr
 				else
 					{
 					if (parent_iter)
-						match = filelist_sort_compare_filedata_full(fd, old_fd, SORT_NAME, TRUE); /* always sort sidecars by name */
+						{
+						/* always sort sidecars by name */
+						match = filelist_sort_compare_filedata_full(fd, old_fd, SORT_NAME, TRUE);
+						}
 					else
+						{
 						match = filelist_sort_compare_filedata_full(fd, old_fd, vf->sort_method, vf->sort_ascend);
+						}
 
 					if (match == 0) g_warning("multiple fd for the same path");
 					}
@@ -1802,8 +1807,43 @@ static void vflist_listview_color_cb(GtkTreeViewColumn *tree_column, GtkCellRend
 {
 	ViewFile *vf = data;
 	gboolean set;
+	FileData *fd;
 
 	gtk_tree_model_get(tree_model, iter, FILE_COLUMN_COLOR, &set, -1);
+	gtk_tree_model_get(tree_model, iter, FILE_COLUMN_POINTER, &fd, -1);
+	// TODO(xsdg): optimize!
+	if (fd)
+		{
+		FileCluster *fc = g_hash_table_lookup(vf->cluster_list->clusters, fd);
+		if (fc)
+			{
+			if (filecluster_has_head(fc, fd))
+				{
+				GdkColor *color_bg = g_new0(GdkColor, 1);
+				color_bg->blue = 0x4000;
+				color_bg->green = 0x4000;
+				color_bg->red = 0xFFFF;
+
+				g_object_set(G_OBJECT(cell),
+						 "cell-background-gdk", color_bg,
+						 "cell-background-set", TRUE, NULL);
+				return;
+				}
+			else if (filecluster_has_child(fc, fd))
+				{
+				GdkColor *color_bg = g_new0(GdkColor, 1);
+				color_bg->blue = 0x8000;
+				color_bg->green = 0x8000;
+				color_bg->red = 0xFFFF;
+
+				g_object_set(G_OBJECT(cell),
+						 "cell-background-gdk", color_bg,
+						 "cell-background-set", TRUE, NULL);
+				return;
+				}
+			}
+		}
+
 	g_object_set(G_OBJECT(cell),
 		     "cell-background-gdk", vflist_listview_color_shifted(vf->listview),
 		     "cell-background-set", set, NULL);

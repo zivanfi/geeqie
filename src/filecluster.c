@@ -120,18 +120,30 @@ FileCluster *fileclusterlist_create_cluster(FileClusterList *fcl, GList *fd_item
 	return new_fc;
 }
 
+gboolean filecluster_has_head(FileCluster *fc, FileData *fd)
+{
+	if (!fd) return FALSE;
+	return filecluster_fd_equal(fc->head->data, fd);
+}
+
+gboolean filecluster_has_child(FileCluster *fc, FileData *fd)
+{
+	if (!fd) return FALSE;
+	return !filecluster_fd_equal(fc->head->data, fd);
+}
+
 gboolean fileclusterlist_has_head(FileClusterList *fcl, FileData *fd)
 {
 	FileCluster *fc = g_hash_table_lookup(fcl->clusters, fd);
 	if (!fc) return FALSE;
-	return filecluster_fd_equal(fc->head->data, fd);
+	return filecluster_has_head(fc, fd);
 }
 
 gboolean fileclusterlist_has_child(FileClusterList *fcl, FileData *fd)
 {
 	FileCluster *fc = g_hash_table_lookup(fcl->clusters, fd);
 	if (!fc) return FALSE;
-	return !filecluster_fd_equal(fc->head->data, fd);
+	return filecluster_has_child(fc, fd);
 }
 
 static gboolean fileclusterlist_should_hide(FileClusterList *fcl, FileData *fd)
@@ -141,7 +153,7 @@ static gboolean fileclusterlist_should_hide(FileClusterList *fcl, FileData *fd)
 	// Only difference vs. fileclusterlist_has_child.  Basically, if the node is a child, but
 	// we're showing children, then don't hide.
 	if (fc->show_children) return FALSE;
-	return !filecluster_fd_equal(fc->head->data, fd);
+	return filecluster_has_child(fc, fd);
 }
 
 // TODO(xsdg): pick a better name for this function
