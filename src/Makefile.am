@@ -144,6 +144,8 @@ geeqie_SOURCES = \
 	exiv2.cc	\
 	filecache.c	\
 	filecache.h	\
+	filecluster.c	\
+	filecluster.h	\
 	filedata.c	\
 	filedata.h	\
 	filefilter.c	\

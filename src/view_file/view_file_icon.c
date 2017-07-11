@@ -30,6 +30,7 @@
 #include "dnd.h"
 #include "editors.h"
 #include "img-view.h"
+#include "filecluster.h"
 #include "filedata.h"
 #include "layout.h"
 #include "layout_image.h"
@@ -1250,6 +1251,63 @@ gboolean vficon_press_key_cb(GtkWidget *widget, GdkEventKey *event, gpointer dat
 			vf->popup = vf_pop_menu(vf);
 			gtk_menu_popup(GTK_MENU(vf->popup), NULL, NULL, vfi_menu_position_cb, vf, 0, GDK_CURRENT_TIME);
 			break;
+		case GDK_KEY_Insert:
+			// DO NOT SUBMIT
+			// TODO(xsdg): make an actual UX for this.
+			g_warning("Starting a cluster!");
+			fd = vficon_find_data(vf, VFICON(vf)->focus_row, VFICON(vf)->focus_column, NULL);
+			if (fd)
+				{
+				// Make a cluster out of the entire selection
+				if (VFICON(vf)->selection && VFICON(vf)->selection->next)
+					{
+					FileCluster *fc;
+					// At least two items selected; go for it.
+					g_warning("Had requisite number of selection items; going for it!");
+					fc = fileclusterlist_create_cluster(vf->cluster_list, VFICON(vf)->selection);
+					if (fc)
+						{
+						vficon_selection_add(vf, VFICON(vf)->selection->data, SELECTION_CLUSTER_HEAD, NULL);
+						vf_refresh(vf);
+						}
+					}
+				else
+					{
+					if (VFICON(vf)->selection)
+						{
+						g_warning("Only one item selected; need at least two.");
+						}
+					else
+						{
+						g_warning("No items selected; need at least two.");
+						}
+					}
+				}
+			break;
+		case GDK_KEY_F2:
+			g_warning("Flipping show_children!");
+			fd = vficon_find_data(vf, VFICON(vf)->focus_row, VFICON(vf)->focus_column, NULL);
+			if (fd)
+				{
+				FileCluster *fc = g_hash_table_lookup(vf->cluster_list->clusters, fd);
+				if (fc)
+					{
+					if (filecluster_toggle_show_children(fc))
+						{
+						for (GList *work = fc->items; work; work = work->next)
+							{
+							// TODO(xsdg): This is broken because the FileData pointer stored in the
+							// cluster is different from the one just added to vf->list, even though
+							// they are equivalent.
+							FileData *fd = work->data;
+							if (work == fc->head) continue;
+							vficon_selection_add(vf, fd, SELECTION_CLUSTER_CHILD, NULL);
+							}
+						}
+					vf_refresh(vf);
+					}
+				}
+			break;
 		default:
 			stop_signal = FALSE;
 			break;
@@ -1796,9 +1854,11 @@ static gboolean vficon_refresh_real(ViewFile *vf, gboolean keep_position)
 		{
 		ret = filelist_read(vf->dir_fd, &new_filelist, NULL);
 		new_filelist = file_data_filter_marks_list(new_filelist, vf_marks_get_filter(vf));
+		new_filelist = fileclusterlist_remove_children_from_list(vf->cluster_list, new_filelist);
 		}
 
-	vf->list = filelist_sort(vf->list, vf->sort_method, vf->sort_ascend); /* the list might not be sorted if there were renames */
+	/* the list might not be sorted if there were renames */
+	vf->list = filelist_sort(vf->list, vf->sort_method, vf->sort_ascend);
 	new_filelist = filelist_sort(new_filelist, vf->sort_method, vf->sort_ascend);
 
 	if (VFICON(vf)->selection)
@@ -1971,6 +2031,21 @@ static void vficon_cell_data_cb(GtkTreeViewColumn *tree_column, GtkCellRenderer 
 
 		memcpy(&color_fg, &style->text[state], sizeof(color_fg));
 		memcpy(&color_bg, &style->base[state], sizeof(color_bg));
+
+		if (fd->selected & SELECTION_CLUSTER_HEAD)
+			{
+			// TODO(xsdg): Cluster coloration should be part of the style.
+			color_bg.blue = 0x4000;
+			color_bg.green = 0x4000;
+			color_bg.red = 0xFFFF;
+			}
+		else if (fd->selected & SELECTION_CLUSTER_CHILD)
+			{
+			// TODO(xsdg): Cluster coloration should be part of the style.
+			color_bg.blue = 0x8000;
+			color_bg.green = 0x8000;
+			color_bg.red = 0xFFFF;
+			}
 
 		if (fd->selected & SELECTION_PRELIGHT)
 			{

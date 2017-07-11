@@ -256,7 +256,9 @@ typedef enum {
 	SELECTION_NONE		= 0,
 	SELECTION_SELECTED	= 1 << 0,
 	SELECTION_PRELIGHT	= 1 << 1,
-	SELECTION_FOCUS		= 1 << 2
+	SELECTION_FOCUS		= 1 << 2,
+	SELECTION_CLUSTER_HEAD	= 1 << 3,
+	SELECTION_CLUSTER_CHILD = 1 << 4
 } SelectionType;
 
 typedef struct _ImageLoader ImageLoader;
@@ -270,6 +272,9 @@ typedef struct _CollectTable CollectTable;
 typedef struct _CollectWindow CollectWindow;
 
 typedef struct _ImageWindow ImageWindow;
+
+typedef struct _FileCluster FileCluster;
+typedef struct _FileClusterList FileClusterList;
 
 typedef struct _FileData FileData;
 typedef struct _FileDataChangeInfo FileDataChangeInfo;
@@ -527,6 +532,20 @@ struct _ImageWindow
 	gint user_stereo;
 
 	gboolean mouse_wheel_mode;
+};
+
+// A FileCluster is a GList with HashTable access to each node (to perform contains() checks quickly).
+struct _FileCluster
+{
+	GList *head;
+	GList *items;
+	gboolean show_children;
+};
+
+struct _FileClusterList
+{
+	// A map from any clustered FileData to the FileCluster object that describes the cluster.
+	GHashTable *clusters;
 };
 
 #define FILEDATA_MARKS_SIZE 6
@@ -843,6 +862,7 @@ struct _ViewFile
 
 	FileData *dir_fd;
 	GList *list;
+	FileClusterList *cluster_list;
 
 	SortType sort_method;
 	gboolean sort_ascend;

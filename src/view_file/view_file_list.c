@@ -27,6 +27,7 @@
 #include "dnd.h"
 #include "editors.h"
 #include "img-view.h"
+#include "filecluster.h"
 #include "layout.h"
 #include "layout_image.h"
 #include "menu.h"
@@ -497,6 +498,77 @@ gboolean vflist_press_key_cb(GtkWidget *widget, GdkEventKey *event, gpointer dat
 	ViewFile *vf = data;
 	GtkTreePath *tpath;
 
+	// DO NOT SUBMIT
+	// TODO(xsdg): these key combos should be handled by the standard, configurable mechanism.
+
+	if (event->keyval == GDK_KEY_Insert || event->keyval == GDK_KEY_F2)
+		{
+		// First off, get the selected FDs
+		GList *selected_fds = NULL;
+			{
+			GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(vf->listview));
+			if (event->keyval == GDK_KEY_Insert)
+				{
+				if (gtk_tree_selection_count_selected_rows(selection) < 2)
+					{
+					g_warning("Need at least two items selected to create a cluster.");
+					return TRUE;
+					}
+				}
+			else
+				{
+				if (gtk_tree_selection_count_selected_rows(selection) < 1)
+					{
+					g_warning("Must have a node selected to flip show_children.");
+					return TRUE;
+					}
+				}
+
+			// List of GtkTreePath
+			GList *selected_rows = gtk_tree_selection_get_selected_rows(selection, NULL);
+			GtkTreeModel *store = gtk_tree_view_get_model(GTK_TREE_VIEW(vf->listview));
+			GtkTreeIter iter;
+			for (GList *work = selected_rows; work; work = work->next)
+				{
+				FileData *fd;
+				GtkTreePath *select_path = work->data;
+				gtk_tree_model_get_iter(store, &iter, select_path);
+				gtk_tree_model_get(store, &iter, FILE_COLUMN_POINTER, &fd, -1);
+				selected_fds = g_list_prepend(selected_fds, file_data_ref(fd));
+				}
+
+			selected_fds = g_list_reverse(selected_fds);
+			g_list_free_full(selected_rows, (GDestroyNotify)gtk_tree_path_free);
+			}
+
+		if (event->keyval == GDK_KEY_Insert)
+			{
+			g_warning("Starting a cluster!");
+			FileCluster *fc = fileclusterlist_create_cluster(vf->cluster_list, selected_fds);
+			if (fc)
+				{
+				// TODO(xsdg): mark as in a cluster somehow?
+				vf_refresh(vf);
+				}
+			}
+		else if (event->keyval == GDK_KEY_F2)
+			{
+			FileData *fd = selected_fds->data;
+			if (fd)
+				{
+				g_warning("Flipping show_children!");
+				FileCluster *fc = g_hash_table_lookup(vf->cluster_list->clusters, fd);
+				if (fc)
+					{
+					filecluster_toggle_show_children(fc);
+					vf_refresh(vf);
+					}
+				}
+			}
+
+		return TRUE;  // Handled event; stop propagating.
+		}
+
 	if (event->keyval != GDK_KEY_Menu) return FALSE;
 
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(vf->listview), &tpath, NULL);
@@ -909,9 +981,14 @@ static void vflist_setup_iter_recursive(ViewFile *vf, GtkTreeStore *store, GtkTr
 				else
 					{
 					if (parent_iter)
-						match = filelist_sort_compare_filedata_full(fd, old_fd, SORT_NAME, TRUE); /* always sort sidecars by name */
+						{
+						/* always sort sidecars by name */
+						match = filelist_sort_compare_filedata_full(fd, old_fd, SORT_NAME, TRUE);
+						}
 					else
+						{
 						match = filelist_sort_compare_filedata_full(fd, old_fd, vf->sort_method, vf->sort_ascend);
+						}
 
 					if (match == 0) g_warning("multiple fd for the same path");
 					}
@@ -1668,6 +1745,7 @@ gboolean vflist_refresh(ViewFile *vf)
 			}
 
 		vf->list = file_data_filter_marks_list(vf->list, vf_marks_get_filter(vf));
+		vf->list = fileclusterlist_remove_children_from_list(vf->cluster_list, vf->list);
 		file_data_register_notify_func(vf_notify_cb, vf, NOTIFY_PRIORITY_MEDIUM);
 
 		DEBUG_1("%s vflist_refresh: sort", get_exec_time());
@@ -1729,8 +1807,43 @@ static void vflist_listview_color_cb(GtkTreeViewColumn *tree_column, GtkCellRend
 {
 	ViewFile *vf = data;
 	gboolean set;
+	FileData *fd;
 
 	gtk_tree_model_get(tree_model, iter, FILE_COLUMN_COLOR, &set, -1);
+	gtk_tree_model_get(tree_model, iter, FILE_COLUMN_POINTER, &fd, -1);
+	// TODO(xsdg): optimize!
+	if (fd)
+		{
+		FileCluster *fc = g_hash_table_lookup(vf->cluster_list->clusters, fd);
+		if (fc)
+			{
+			if (filecluster_has_head(fc, fd))
+				{
+				GdkColor *color_bg = g_new0(GdkColor, 1);
+				color_bg->blue = 0x4000;
+				color_bg->green = 0x4000;
+				color_bg->red = 0xFFFF;
+
+				g_object_set(G_OBJECT(cell),
+						 "cell-background-gdk", color_bg,
+						 "cell-background-set", TRUE, NULL);
+				return;
+				}
+			else if (filecluster_has_child(fc, fd))
+				{
+				GdkColor *color_bg = g_new0(GdkColor, 1);
+				color_bg->blue = 0x8000;
+				color_bg->green = 0x8000;
+				color_bg->red = 0xFFFF;
+
+				g_object_set(G_OBJECT(cell),
+						 "cell-background-gdk", color_bg,
+						 "cell-background-set", TRUE, NULL);
+				return;
+				}
+			}
+		}
+
 	g_object_set(G_OBJECT(cell),
 		     "cell-background-gdk", vflist_listview_color_shifted(vf->listview),
 		     "cell-background-set", set, NULL);
