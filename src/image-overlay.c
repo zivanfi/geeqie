@@ -90,7 +90,7 @@ static OSDIcon osd_icons[] = {
 
 #define IMAGE_OSD_DEFAULT_DURATION 30
 
-#define HISTOGRAM_HEIGHT 140
+#define HISTOGRAM_HEIGHT 50
 #define HISTOGRAM_WIDTH  256
 
 static void image_osd_timer_schedule(OverlayStateData *osd);
@@ -267,7 +267,7 @@ static gchar *keywords_to_string(FileData *fd)
 
 static gchar *image_osd_mkinfo(const gchar *str, ImageWindow *imd, GHashTable *vars)
 {
-	gchar delim = '%', imp = '|', sep[] = " - ";
+	gchar delim = '%', imp = '|', sep[] = ", ";
 	gchar *start, *end;
 	guint pos, prev;
 	gboolean want_separator = FALSE;
@@ -661,7 +661,7 @@ static GdkPixbuf *image_osd_info_render(OverlayStateData *osd)
 			g_free(text);
 			text = text2;
 			}
-
+/*
 		if (with_hist)
 			{
 			gchar *escaped_histogram_label = g_markup_escape_text(histogram_label(osd->histogram), -1);
@@ -673,6 +673,7 @@ static GdkPixbuf *image_osd_info_render(OverlayStateData *osd)
 			g_free(text);
 			text = text2;
 			}
+*/
 	}
 
 	font_desc = pango_font_description_from_string(options->image_overlay.font);

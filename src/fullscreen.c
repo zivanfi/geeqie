@@ -30,6 +30,9 @@
 #include "window.h"
 #include "image-load.h"
 
+// IZO
+#define HIDE_WINDOW_IN_FULLSCREEN
+
 enum {
 	FULLSCREEN_CURSOR_HIDDEN = 1 << 0,
 	FULLSCREEN_CURSOR_NORMAL = 1 << 1,
