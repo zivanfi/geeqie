@@ -147,6 +147,7 @@ struct _RendererTiles
 	gint x_scroll;  /* allow local adjustment and mirroring */
 	gint y_scroll;
 
+	gint hidpi_scale;
 };
 
 
@@ -622,9 +623,13 @@ static void rt_overlay_draw(RendererTiles *rt, gint x, gint y, gint w, gint h,
 				cairo_rectangle(cr, 0, 0, rw, rh);
 				cairo_fill_preserve(cr);
 
-				gdk_cairo_set_source_pixbuf(cr, od->pixbuf, px - rx, py - ry);
+				cairo_surface_t *surface;
+				surface = gdk_cairo_surface_create_from_pixbuf (od->pixbuf, rt->hidpi_scale, NULL);
+				cairo_set_source_surface (cr, surface, px - rx, py - ry);
+
 				cairo_fill (cr);
 				cairo_destroy (cr);
+				cairo_surface_destroy (surface);
 
 				cr = gdk_cairo_create(od->window);
 				cairo_set_source_surface(cr, rt->overlay_buffer, rx - px, ry - py);
@@ -651,9 +656,13 @@ static void rt_overlay_draw(RendererTiles *rt, gint x, gint y, gint w, gint h,
 					cairo_rectangle(cr, 0, 0, sw, sh);
 					cairo_fill_preserve(cr);
 
-					gdk_cairo_set_source_pixbuf(cr, od->pixbuf, px - sx, py - sy);
+					cairo_surface_t *surface;
+					surface = gdk_cairo_surface_create_from_pixbuf (od->pixbuf, rt->hidpi_scale, NULL);
+					cairo_set_source_surface (cr, surface, px - sx, py - sy);
+
 					cairo_fill (cr);
 					cairo_destroy (cr);
+					cairo_surface_destroy (surface);
 
 					cr = gdk_cairo_create(od->window);
 					cairo_set_source_surface(cr, rt->overlay_buffer, sx - px, sy - py);
@@ -1150,13 +1159,19 @@ static gboolean rt_source_tile_render(RendererTiles *rt, ImageTile *it,
 				if (st->blank)
 					{
 					cairo_set_source_rgb(cr, 0, 0, 0);
+					cairo_fill (cr);
+					cairo_destroy (cr);
 					}
 				else /* (pr->zoom == 1.0 || pr->scale == 1.0) */
 					{
-					gdk_cairo_set_source_pixbuf(cr, st->pixbuf, -it->x + st->x, -it->y + st->y);
+					cairo_surface_t *surface;
+					surface = gdk_cairo_surface_create_from_pixbuf (st->pixbuf, 2, NULL);
+					cairo_set_source_surface (cr, surface, -it->x + st->x, -it->y + st->y);
+
+					cairo_fill (cr);
+					cairo_destroy (cr);
+					cairo_surface_destroy (surface);
 					}
-				cairo_fill (cr);
-				cairo_destroy (cr);
 				}
 			}
 		}
@@ -1424,9 +1439,12 @@ static void rt_tile_render(RendererTiles *rt, ImageTile *it,
 
 		cr = cairo_create(it->surface);
 		cairo_rectangle (cr, x, y, w, h);
-		gdk_cairo_set_source_pixbuf(cr, it->pixbuf, 0, 0);
+		cairo_surface_t *surface;
+		surface = gdk_cairo_surface_create_from_pixbuf (it->pixbuf, rt->hidpi_scale, NULL);
+		cairo_set_source_surface (cr, surface, 0, 0);
 		cairo_fill (cr);
 		cairo_destroy (cr);
+		cairo_surface_destroy (surface);
 		}
 }
 
@@ -2174,6 +2192,9 @@ RendererFuncs *renderer_tiles_new(PixbufRenderer *pr)
 	g_signal_connect(G_OBJECT(pr), "expose_event",
 	                 G_CALLBACK(rt_expose_cb), rt);
 #endif
+
+	rt->hidpi_scale = gtk_widget_get_scale_factor(GTK_WIDGET(pr));
+
 	return (RendererFuncs *) rt;
 }
 
