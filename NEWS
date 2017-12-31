@@ -1,3 +1,21 @@
+Geeqie 1.4
+==========
+
+- Improvement of GTK3 implementation
+- Improved marks workflow
+- Animate gifs (via context menu or key A)
+- Compiles with gcc and clang
+- Rectangular selections (activated by Alt-R)
+- Folder bookmarks
+- Search via geo position
+- Thumbnail preview in dialogues
+- Customisable tool bar
+- Slideshow speed customisable while playing
+- Many usability improvements
+- Language updates
+- Many small improvements
+- Many bugfixes as usual
+
 Geeqie 1.3
 ==========
 
