@@ -512,7 +512,7 @@ static void rt_tile_prepare(RendererTiles *rt, ImageTile *it)
 		                                            CAIRO_CONTENT_COLOR,
 		                                            rt->tile_width, rt->tile_height);
 
-		size = pixmap_calc_size(surface);
+		size = pixmap_calc_size(surface) * rt->hidpi_scale * rt->hidpi_scale;
 		rt_tile_free_space(rt, size, it);
 
 		it->surface = surface;
@@ -524,9 +524,9 @@ static void rt_tile_prepare(RendererTiles *rt, ImageTile *it)
 		{
 		GdkPixbuf *pixbuf;
 		guint size;
-		pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, rt->tile_width, rt->tile_height);
+		pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, rt->hidpi_scale * rt->tile_width, rt->hidpi_scale * rt->tile_height);
 
-		size = gdk_pixbuf_get_rowstride(pixbuf) * rt->tile_height;
+		size = gdk_pixbuf_get_rowstride(pixbuf) * rt->tile_height * rt->hidpi_scale;
 		rt_tile_free_space(rt, size, it);
 
 		it->pixbuf = pixbuf;
@@ -589,6 +589,7 @@ static void rt_overlay_init_window(RendererTiles *rt, OverlayData *od)
 static void rt_overlay_draw(RendererTiles *rt, gint x, gint y, gint w, gint h,
 			    ImageTile *it)
 {
+	// TODO
 	PixbufRenderer *pr = rt->pr;
 	GList *work;
 
@@ -890,7 +891,7 @@ static void rt_hierarchy_changed_cb(GtkWidget *widget, GtkWidget *previous_tople
 
 static GdkPixbuf *rt_get_spare_tile(RendererTiles *rt)
 {
-	if (!rt->spare_tile) rt->spare_tile = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, rt->tile_width, rt->tile_height);
+	if (!rt->spare_tile) rt->spare_tile = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, rt->tile_width * rt->hidpi_scale, rt->tile_height * rt->hidpi_scale);
 	return rt->spare_tile;
 }
 
@@ -905,7 +906,7 @@ static void rt_tile_rotate_90_clockwise(RendererTiles *rt, GdkPixbuf **tile, gin
 	guchar *sp, *dp;
 	guchar *ip, *spi, *dpi;
 	gint i, j;
-	gint tw = rt->tile_width;
+	gint tw = rt->tile_width * rt->hidpi_scale;
 
 	srs = gdk_pixbuf_get_rowstride(src);
 	s_pix = gdk_pixbuf_get_pixels(src);
@@ -941,7 +942,7 @@ static void rt_tile_rotate_90_counter_clockwise(RendererTiles *rt, GdkPixbuf **t
 	guchar *sp, *dp;
 	guchar *ip, *spi, *dpi;
 	gint i, j;
-	gint th = rt->tile_height;
+	gint th = rt->tile_height * rt->hidpi_scale;
 
 	srs = gdk_pixbuf_get_rowstride(src);
 	s_pix = gdk_pixbuf_get_pixels(src);
@@ -978,7 +979,7 @@ static void rt_tile_mirror_only(RendererTiles *rt, GdkPixbuf **tile, gint x, gin
 	guchar *spi, *dpi;
 	gint i, j;
 
-	gint tw = rt->tile_width;
+	gint tw = rt->tile_width * rt->hidpi_scale;
 
 	srs = gdk_pixbuf_get_rowstride(src);
 	s_pix = gdk_pixbuf_get_pixels(src);
@@ -1014,8 +1015,8 @@ static void rt_tile_mirror_and_flip(RendererTiles *rt, GdkPixbuf **tile, gint x,
 	guchar *sp, *dp;
 	guchar *dpi;
 	gint i, j;
-	gint tw = rt->tile_width;
-	gint th = rt->tile_height;
+	gint tw = rt->tile_width * rt->hidpi_scale;
+	gint th = rt->tile_height * rt->hidpi_scale;
 
 	srs = gdk_pixbuf_get_rowstride(src);
 	s_pix = gdk_pixbuf_get_pixels(src);
@@ -1050,7 +1051,7 @@ static void rt_tile_flip_only(RendererTiles *rt, GdkPixbuf **tile, gint x, gint 
 	guchar *sp, *dp;
 	guchar *spi, *dpi;
 	gint i;
-	gint th = rt->tile_height;
+	gint th = rt->tile_height * rt->hidpi_scale;
 
 	srs = gdk_pixbuf_get_rowstride(src);
 	s_pix = gdk_pixbuf_get_pixels(src);
@@ -1371,8 +1372,8 @@ static void rt_tile_render(RendererTiles *rt, ImageTile *it,
 
 		if (pr->image_width == 0 || pr->image_height == 0) return;
 
-		scale_x = (gdouble)pr->width / pr->image_width;
-		scale_y = (gdouble)pr->height / pr->image_height;
+		scale_x = rt->hidpi_scale * (gdouble)pr->width / pr->image_width;
+		scale_y = rt->hidpi_scale * (gdouble)pr->height / pr->image_height;
 
 		pr_tile_coords_map_orientation(orientation, it->x, it->y,
 					    pr->width, pr->height,
@@ -1383,6 +1384,13 @@ static void rt_tile_render(RendererTiles *rt, ImageTile *it,
 					    w, h,
 					    &pb_x, &pb_y,
 					    &pb_w, &pb_h);
+
+        src_x *= rt->hidpi_scale;
+        src_y *= rt->hidpi_scale;
+        pb_x *= rt->hidpi_scale;
+        pb_y *= rt->hidpi_scale;
+        pb_w *= rt->hidpi_scale;
+        pb_h *= rt->hidpi_scale;
 
 		switch (orientation)
 			{
@@ -1775,6 +1783,8 @@ static gboolean rt_queue_to_tiles(RendererTiles *rt, gint x, gint y, gint w, gin
 
 	y1 = ROUND_DOWN(y, rt->tile_height);
 	y2 = ROUND_UP(y + h, rt->tile_height);
+
+    // ???
 
 	for (j = y1; j <= y2; j += rt->tile_height)
 		{
